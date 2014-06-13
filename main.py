@@ -10,7 +10,7 @@ Base = declarative_base()
  
 @app.route("/leaderboard/<world>/<level>")
 def FlaskScores(world,level):
-    return "Leaderboards for " + world + level 
+    return "TODO"
     
 @app.route("/insert/<int:world>/<int:level>/<string:player>/<int:points>")
 def FlaskInsert(world,level,player,points):
@@ -73,11 +73,5 @@ def GetLeaderboard(world,level):
     return session.query(Score).filter(and_(Score.worldId == world,Score.levelId == level)).all()
 
 if __name__ == "__main__":
-    app.debug = True
     CreateDatabase()    
-    InsertHighscore(1,1,"corenting",5)
-    InsertHighscore(1,1,"corenting",10)
-    InsertHighscore(1,1,"corenting",15)
-    InsertHighscore(1,1,"corenting",20)
-    InsertHighscore(1,1,"corenting",25)
     app.run()
