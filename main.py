@@ -3,9 +3,20 @@ import sys
 from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
- 
+from flask import Flask,jsonify
+
+app = Flask(__name__)
 Base = declarative_base()
  
+@app.route("/leaderboard/<world>/<level>")
+def FlaskScores(world,level):
+    return "Leaderboards for " + world + level 
+    
+@app.route("/insert/<int:world>/<int:level>/<string:player>/<int:points>")
+def FlaskInsert(world,level,player,points):
+    exit = InsertHighscore(int(world),int(level),player,int(points))
+    return str(exit)
+    
 class Score(Base):
     __tablename__ = 'scores'
     uniqueId = Column(Integer, primary_key=True)
@@ -52,3 +63,21 @@ def InsertHighscore(world,level,player,points):
             Insert(world,level,player,points)
             return 0
         return -1
+        
+def GetLeaderboard(world,level):
+    engine = create_engine('sqlite:///scores.db')
+    Base.metadata.bind = engine
+    DBSession = sessionmaker()
+    DBSession.bind = engine
+    session = DBSession()
+    return session.query(Score).filter(and_(Score.worldId == world,Score.levelId == level)).all()
+
+if __name__ == "__main__":
+    app.debug = True
+    CreateDatabase()    
+    InsertHighscore(1,1,"corenting",5)
+    InsertHighscore(1,1,"corenting",10)
+    InsertHighscore(1,1,"corenting",15)
+    InsertHighscore(1,1,"corenting",20)
+    InsertHighscore(1,1,"corenting",25)
+    app.run()
