@@ -80,5 +80,4 @@ def GetLeaderboard(world,level):
 
 if __name__ == "__main__":
     CreateDatabase()
-    app.debug = True
     app.run()
