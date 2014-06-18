@@ -7,20 +7,19 @@ from flask import Flask,jsonify
 app = Flask(__name__)
 Base = declarative_base()
  
-@app.route("/leaderboard/<world>/<level>")
-def FlaskScores(world,level):
-    return jsonify(highscores=[i.serialize for i in GetLeaderboard(world,level)])
+@app.route("/leaderboard/<level>")
+def FlaskScores(level):
+    return jsonify(highscores=[i.serialize for i in GetLeaderboard(level)])
     
-@app.route("/insert/<int:world>/<int:level>/<string:player>/<int:points>")
-def FlaskInsert(world,level,player,points):
-    exit = InsertHighscore(int(world),int(level),player,int(points))
+@app.route("/insert/<string:level>/<string:player>/<int:points>")
+def FlaskInsert(level,player,points):
+    exit = InsertHighscore(level,player,int(points))
     return jsonify(result = exit)
     
 class Score(Base):
     __tablename__ = 'scores'
     uniqueId = Column(Integer, primary_key=True)
-    worldId = Column(Integer, nullable=False)
-    levelId = Column(Integer, nullable=False)
+    level = Column(String(255), nullable=False)
     name = Column(String(18), nullable=False)
     score = Column(Integer, nullable=False)
     
@@ -35,26 +34,26 @@ def CreateDatabase():
     engine = create_engine('sqlite:///scores.db')
     Base.metadata.create_all(engine)
 
-def Insert(world,level,player,points):
+def Insert(level,player,points):
     engine = create_engine('sqlite:///scores.db')
     Base.metadata.bind = engine
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
-    score = Score(worldId = world, levelId = level, name = player, score=points)
+    score = Score(level = level, name = player, score=points)
     session.add(score)
     session.commit()
 
 # Insert the highscore in the database if necessary.
 # Return 0 if the score replaces an older highscore, 1 if there were less than 10 highscores, and -1 if it wasn't added
-def InsertHighscore(world,level,player,points):    
+def InsertHighscore(level,player,points):    
     engine = create_engine('sqlite:///scores.db')
     Base.metadata.bind = engine
     DBSession = sessionmaker()
     DBSession.bind = engine
     session = DBSession()
-    scores = session.query(Score).filter(and_(Score.worldId == world,Score.levelId == level)).all()
+    scores = session.query(Score).filter(and_(Score.level == level)).all()
     if len(scores) < 10:
-        Insert(world,level,player,points)
+        Insert(level,player,points)
         return 1
     else:
         minScore = scores[0].score
@@ -66,17 +65,17 @@ def InsertHighscore(world,level,player,points):
         if points > minScore:
             session.delete(session.query(Score).get(minId))
             session.commit()
-            Insert(world,level,player,points)
+            Insert(level,player,points)
             return 0
         return -1
         
-def GetLeaderboard(world,level):
+def GetLeaderboard(level):
     engine = create_engine('sqlite:///scores.db')
     Base.metadata.bind = engine
     DBSession = sessionmaker()
     DBSession.bind = engine
     session = DBSession()
-    return session.query(Score).filter(and_(Score.worldId == world,Score.levelId == level)).all()
+    return session.query(Score).filter(and_(Score.level == level)).all()
 
 if __name__ == "__main__":
     CreateDatabase()
